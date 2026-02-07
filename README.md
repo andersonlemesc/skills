@@ -6,6 +6,40 @@ Compativel com **Claude Code**, **Cursor** e **Antigravity**.
 
 ---
 
+## Instalacao Rapida
+
+Um comando para instalar no seu projeto:
+
+```bash
+# Instalar tudo (Claude Code + Cursor + Agent)
+curl -fsSL https://raw.githubusercontent.com/andersonlemesc/skills/main/bin/install.sh | bash
+
+# Apenas Claude Code
+curl -fsSL https://raw.githubusercontent.com/andersonlemesc/skills/main/bin/install.sh | bash -s -- --claude
+
+# Apenas Cursor
+curl -fsSL https://raw.githubusercontent.com/andersonlemesc/skills/main/bin/install.sh | bash -s -- --cursor
+
+# Apenas Agent/Antigravity
+curl -fsSL https://raw.githubusercontent.com/andersonlemesc/skills/main/bin/install.sh | bash -s -- --agent
+```
+
+### Instalar em projeto especifico
+
+```bash
+# Apontar para o diretorio do projeto
+curl -fsSL https://raw.githubusercontent.com/andersonlemesc/skills/main/bin/install.sh | bash -s -- --all --path /caminho/do/projeto
+
+# Instalar globalmente no HOME (~/.claude, ~/.cursor, ~/.agent)
+curl -fsSL https://raw.githubusercontent.com/andersonlemesc/skills/main/bin/install.sh | bash -s -- --all --global
+```
+
+### Atualizar
+
+Basta rodar o mesmo comando novamente. O script substitui as skills existentes pela versao mais recente.
+
+---
+
 ## Conteudo
 
 | Categoria | Quantidade | Diretorio |
@@ -112,172 +146,60 @@ Compativel com **Claude Code**, **Cursor** e **Antigravity**.
 
 ---
 
-## Como Usar em Seus Projetos
+## Metodos Alternativos de Instalacao
 
-Existem 3 formas de trazer estas skills para dentro dos seus projetos sem comprometer o codigo existente.
+### Git Submodule
 
-### Opcao 1: Git Submodule (Recomendado)
-
-O submodule adiciona este repositorio como uma dependencia dentro do seu projeto. Ele fica isolado em sua propria pasta e nao mistura com seu codigo.
+Adiciona como sub-repositorio. Bom para projetos em equipe.
 
 ```bash
-# Dentro do seu projeto, adicionar como submodule
-git submodule add https://github.com/SEU_USUARIO/ai-skills.git .ai-skills
+# Adicionar submodule
+git submodule add https://github.com/andersonlemesc/skills.git .ai-skills
 
-# Criar symlinks para as pastas que cada ferramenta espera
-# Para Claude Code
-ln -s .ai-skills/.claude/skills .claude/skills
-ln -s .ai-skills/.claude/rules .claude/rules
-
-# Para Cursor
-ln -s .ai-skills/.cursor/skills .cursor/skills
-ln -s .ai-skills/.cursor/rules .cursor/rules
-
-# Para Antigravity/Agent
+# Criar diretorios e symlinks
+mkdir -p .claude .cursor
+ln -s ../.ai-skills/.claude/skills .claude/skills
+ln -s ../.ai-skills/.claude/rules .claude/rules
+ln -s ../.ai-skills/.cursor/skills .cursor/skills
+ln -s ../.ai-skills/.cursor/rules .cursor/rules
 ln -s .ai-skills/.agent .agent
 ```
 
-**Atualizar skills no futuro:**
-
+**Atualizar:**
 ```bash
-cd .ai-skills
-git pull origin main
-cd ..
-git add .ai-skills
-git commit -m "chore: update ai-skills submodule"
+cd .ai-skills && git pull origin main && cd ..
+git add .ai-skills && git commit -m "chore: update ai-skills"
 ```
 
-**Quando alguem clonar seu projeto:**
-
+**Clonar projeto com submodule:**
 ```bash
 git clone --recurse-submodules https://github.com/SEU_USUARIO/meu-projeto.git
-
-# Ou se ja clonou sem submodules:
-git submodule init
-git submodule update
 ```
 
-**Remover se nao quiser mais:**
+### Git Clone Direto
+
+Para uso rapido sem vincular ao projeto:
 
 ```bash
-git submodule deinit .ai-skills
-git rm .ai-skills
-rm -rf .git/modules/.ai-skills
-```
+# Clonar e copiar manualmente
+git clone --depth 1 https://github.com/andersonlemesc/skills.git /tmp/skills
 
----
+# Copiar o que precisa
+mkdir -p .claude && cp -r /tmp/skills/.claude/skills .claude/
+mkdir -p .cursor && cp -r /tmp/skills/.cursor/skills .cursor/
 
-### Opcao 2: Script de Instalacao
-
-Um script que clona o repositorio e copia apenas o necessario para seu projeto.
-
-Salve o script `install-skills.sh` na raiz do seu projeto:
-
-```bash
-#!/bin/bash
-# install-skills.sh - Instala AI skills no projeto atual
-# Uso: ./install-skills.sh [claude|cursor|agent|all]
-
-set -e
-
-REPO_URL="https://github.com/SEU_USUARIO/ai-skills.git"
-TEMP_DIR=$(mktemp -d)
-TARGET=${1:-all}
-
-echo "Baixando skills..."
-git clone --depth 1 "$REPO_URL" "$TEMP_DIR"
-
-install_claude() {
-    echo "Instalando Claude Code skills e rules..."
-    mkdir -p .claude
-    cp -r "$TEMP_DIR/.claude/skills" .claude/
-    cp -r "$TEMP_DIR/.claude/rules" .claude/
-    echo "  Claude Code: OK"
-}
-
-install_cursor() {
-    echo "Instalando Cursor skills e rules..."
-    mkdir -p .cursor
-    cp -r "$TEMP_DIR/.cursor/skills" .cursor/
-    cp -r "$TEMP_DIR/.cursor/rules" .cursor/
-    echo "  Cursor: OK"
-}
-
-install_agent() {
-    echo "Instalando Agent skills, workflows e agents..."
-    cp -r "$TEMP_DIR/.agent" .
-    echo "  Agent: OK"
-}
-
-case "$TARGET" in
-    claude) install_claude ;;
-    cursor) install_cursor ;;
-    agent)  install_agent ;;
-    all)
-        install_claude
-        install_cursor
-        install_agent
-        ;;
-    *)
-        echo "Uso: $0 [claude|cursor|agent|all]"
-        exit 1
-        ;;
-esac
-
-rm -rf "$TEMP_DIR"
-echo "Instalacao concluida!"
-```
-
-```bash
-# Dar permissao e executar
-chmod +x install-skills.sh
-
-# Instalar tudo
-./install-skills.sh all
-
-# Ou apenas para uma ferramenta
-./install-skills.sh claude
-./install-skills.sh cursor
-./install-skills.sh agent
-```
-
----
-
-### Opcao 3: Git Sparse Checkout (Clonar apenas pastas especificas)
-
-Util quando voce quer apenas uma parte do repositorio.
-
-```bash
-# Clonar sem baixar arquivos
-git clone --no-checkout --filter=blob:none https://github.com/SEU_USUARIO/ai-skills.git .ai-skills
-cd .ai-skills
-
-# Configurar sparse checkout
-git sparse-checkout init --cone
-
-# Baixar apenas Claude Code skills
-git sparse-checkout set .claude/skills .claude/rules
-
-# Ou apenas Cursor
-git sparse-checkout set .cursor/skills .cursor/rules
-
-# Ou apenas Agent
-git sparse-checkout set .agent
-
-# Baixar os arquivos
-git checkout main
+rm -rf /tmp/skills
 ```
 
 ---
 
 ## Comparacao dos Metodos
 
-| | Submodule | Script | Sparse Checkout |
+| | Script (curl) | Submodule | Clone direto |
 |---|---|---|---|
-| **Atualizacao** | `git pull` no submodule | Rodar script novamente | `git pull` |
-| **Rastreamento** | Versao fixada no commit | Sem rastreamento | Branch tracking |
-| **Facilidade** | Media | Facil | Media |
-| **Ideal para** | Projetos em equipe | Uso pessoal rapido | Baixar parcial |
+| **Facilidade** | Um comando | Media | Manual |
+| **Atualizacao** | Rodar novamente | `git pull` | Rodar novamente |
+| **Ideal para** | Uso pessoal | Equipes | Uso pontual |
 | **Compromete projeto?** | Nao | Nao | Nao |
 
 ---
@@ -286,13 +208,12 @@ git checkout main
 
 ```
 .
-├── .claude/                  # Claude Code
-│   ├── skills/               # 52 skills
-│   │   ├── laravel-best-practices/
-│   │   ├── react-patterns/
-│   │   ├── pest-testing/
-│   │   └── ...
-│   ├── rules/                # 6 rules
+├── bin/
+│   └── install.sh               # Script de instalacao
+│
+├── .claude/                      # Claude Code
+│   ├── skills/                   # 52 skills
+│   ├── rules/                    # 6 rules
 │   │   ├── core/
 │   │   │   ├── database-transactions.mdc
 │   │   │   ├── error-handling.mdc
@@ -303,17 +224,17 @@ git checkout main
 │   │       └── git-workflow.mdc
 │   └── mcp.json
 │
-├── .cursor/                  # Cursor IDE
-│   ├── skills/               # 52 skills
-│   ├── rules/                # 6 rules
+├── .cursor/                      # Cursor IDE
+│   ├── skills/                   # 52 skills
+│   ├── rules/                    # 6 rules
 │   └── mcp.json
 │
-├── .agent/                   # Antigravity / Agent
-│   ├── skills/               # 50 skills
-│   ├── workflows/            # 11 workflows
-│   ├── agents/               # 20 agent personas
-│   ├── rules/                # Rules
-│   ├── scripts/              # 4 utility scripts
+├── .agent/                       # Antigravity / Agent
+│   ├── skills/                   # 50 skills
+│   ├── workflows/                # 11 workflows
+│   ├── agents/                   # 20 agent personas
+│   ├── rules/
+│   ├── scripts/                  # 4 utility scripts
 │   └── ARCHITECTURE.md
 │
 └── README.md
@@ -321,29 +242,18 @@ git checkout main
 
 ---
 
-## Adicionando ao .gitignore do Seu Projeto
+## .gitignore do Seu Projeto
 
-Se usar o metodo de script (Opcao 2), adicione ao `.gitignore` do seu projeto para nao commitar as skills junto:
+Se nao quiser versionar as skills no projeto alvo:
 
 ```gitignore
-# AI Skills (baixados via script)
+# AI Skills (instalados via script)
 .claude/skills/
 .claude/rules/
 .cursor/skills/
 .cursor/rules/
 .agent/
 ```
-
-Se quiser que as skills fiquem versionadas junto ao projeto (recomendado para equipes), **nao** adicione ao `.gitignore`.
-
----
-
-## Dicas
-
-- **Novo projeto?** Use o script (Opcao 2) para copiar rapido
-- **Projeto em equipe?** Use submodule (Opcao 1) para todos terem a mesma versao
-- **Quer personalizar?** Copie com o script e edite livremente no seu projeto
-- **Nao usa todas as ferramentas?** Instale apenas o que precisa (`./install-skills.sh claude`)
 
 ---
 
