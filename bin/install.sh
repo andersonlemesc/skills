@@ -130,6 +130,12 @@ install_skills() {
     echo -e "${BLUE}Baixando skills...${NC}"
     git clone --depth 1 --quiet "$REPO" "$TEMP_DIR/repo"
 
+    # Copiar AGENTS.md (universal, funciona em todas as ferramentas)
+    if [ -f "$TEMP_DIR/repo/AGENTS.md" ]; then
+        cp "$TEMP_DIR/repo/AGENTS.md" "$TARGET/AGENTS.md"
+        echo -e "  ${GREEN}AGENTS.md copiado para raiz${NC}"
+    fi
+
     for tool in $MODE; do
         case "$tool" in
             claude)
