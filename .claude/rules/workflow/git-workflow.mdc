@@ -1,0 +1,695 @@
+---
+description: "Git workflow and commit standards. Enforces Gitflow branching model (main, develop, features), prevents premature commits, requires testing before committing, and ensures proper commit messages. Use when creating branches, committing code, merging features, or discussing Git workflow."
+alwaysApply: false
+globs:
+  - "**/.git/**"
+  - "**/*.sh"
+  - "**/package.json"
+  - "**/composer.json"
+---
+
+# Git Workflow & Commit Standards
+
+## Branch Strategy (Gitflow)
+
+### Branch Structure
+
+```
+main (production)
+  ↑
+develop (development)
+  ↑
+feature/* (individual features)
+```
+
+### Branch Rules
+
+**CRITICAL RULES:**
+1. ❌ **NEVER commit directly to `main`**
+2. ❌ **NEVER commit directly to `develop`** (unless hotfix)
+3. ✅ **ALWAYS work on `feature/*` branches**
+4. ✅ **ALWAYS test before committing**
+5. ✅ **ALWAYS merge via Pull Request**
+
+---
+
+## Branch Naming Convention
+
+### Feature Branches
+```bash
+# Pattern: feature/descriptive-name
+feature/user-authentication
+feature/document-upload
+feature/vehicle-tracking
+feature/pdf-generation
+```
+
+### Bugfix Branches
+```bash
+# Pattern: bugfix/issue-description
+bugfix/login-validation
+bugfix/timezone-error
+bugfix/n8n-webhook
+```
+
+### Hotfix Branches (emergency production fixes)
+```bash
+# Pattern: hotfix/critical-issue
+hotfix/security-vulnerability
+hotfix/payment-gateway
+```
+
+---
+
+## Workflow Steps
+
+### 1. Starting New Feature
+
+```bash
+# ✅ CORRECT workflow
+git checkout develop
+git pull origin develop
+git checkout -b feature/user-permissions
+
+# ❌ WRONG - Never branch from main
+git checkout main
+git checkout -b feature/something  # WRONG!
+```
+
+### 2. Development Phase
+
+```bash
+# Work on feature
+# Make changes
+# Test thoroughly
+
+# ❌ DO NOT commit after each AI response
+# ❌ DO NOT commit untested code
+# ✅ ONLY commit after testing and validation
+```
+
+### 3. Testing Before Commit
+
+**ALWAYS test before committing:**
+
+```bash
+# Backend tests
+php artisan test
+php artisan test --filter UserPermissionTest
+
+# Frontend tests (if applicable)
+npm run test
+
+# Manual testing
+# - Test in browser
+# - Check all edge cases
+# - Verify no errors in console
+# - Test with different data
+
+# ✅ Only commit when all tests pass
+```
+
+### 4. Committing Changes
+
+```bash
+# After successful testing:
+git add .
+git commit -m "feat: implement user permission system"
+git push origin feature/user-permissions
+```
+
+### 5. Merging to Develop
+
+```bash
+# Create Pull Request on GitHub/GitLab
+# After code review and approval:
+git checkout develop
+git pull origin develop
+git merge feature/user-permissions
+git push origin develop
+
+# Delete feature branch
+git branch -d feature/user-permissions
+git push origin --delete feature/user-permissions
+```
+
+---
+
+## Commit Message Standards
+
+### Format
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+
+| Type | Usage | Example |
+|------|-------|---------|
+| `feat` | New feature | `feat: add user authentication` |
+| `fix` | Bug fix | `fix: correct timezone calculation` |
+| `refactor` | Code refactoring | `refactor: simplify user service` |
+| `docs` | Documentation | `docs: update API documentation` |
+| `style` | Code style (formatting) | `style: format controllers with PSR-12` |
+| `test` | Tests | `test: add user permission tests` |
+| `chore` | Maintenance | `chore: update dependencies` |
+| `perf` | Performance | `perf: optimize database queries` |
+| `build` | Build system | `build: update Docker configuration` |
+| `ci` | CI/CD | `ci: add GitHub Actions workflow` |
+
+### Examples
+
+```bash
+# ✅ GOOD commit messages
+git commit -m "feat: implement document approval workflow"
+git commit -m "fix: resolve N+1 query in vehicle listing"
+git commit -m "refactor: extract validation logic to Form Request"
+git commit -m "test: add integration tests for document service"
+
+# ❌ BAD commit messages
+git commit -m "fix"
+git commit -m "changes"
+git commit -m "update code"
+git commit -m "ai fix"
+git commit -m "try again"
+```
+
+### Detailed Commit Message
+
+```bash
+git commit -m "feat(auth): implement role-based permissions
+
+- Add Permission model and migration
+- Create PermissionPolicy for authorization
+- Implement middleware for permission checks
+- Add Spatie Laravel Permission package
+- Create seeder for default roles and permissions
+
+Closes #123"
+```
+
+---
+
+## AI Interaction Pattern
+
+### ❌ WRONG Pattern (Avoid This)
+
+```bash
+# User: "Create user controller"
+# AI: [creates controller with bug]
+git commit -m "add controller"  # ← DON'T COMMIT YET!
+
+# User: "Fix the bug"
+# AI: [fixes bug]
+git commit -m "fix"  # ← DON'T DO THIS!
+
+# User: "Add validation"
+# AI: [adds validation]
+git commit -m "add validation"  # ← STOP!
+
+# Result: 10+ commits for one feature 😞
+```
+
+### ✅ CORRECT Pattern (Do This)
+
+```bash
+# User: "Create user controller with validation and tests"
+# AI: [creates complete feature]
+
+# User tests thoroughly:
+# - Run tests: php artisan test
+# - Test in browser
+# - Check edge cases
+# - Verify all functionality
+
+# After confirming everything works:
+git add .
+git commit -m "feat: implement user management with validation"
+git push origin feature/user-management
+
+# Result: 1 clean commit 🎉
+```
+
+---
+
+## When to Commit
+
+### ✅ DO Commit When:
+
+1. **Feature is complete and tested**
+   - All functionality works
+   - Tests pass
+   - No obvious bugs
+   - Meets requirements
+
+2. **Logical checkpoint reached**
+   - Database migration complete and tested
+   - API endpoint working and tested
+   - Component rendering correctly
+
+3. **Before switching tasks**
+   - Save work before starting different feature
+   - Create checkpoint before major refactoring
+
+### ❌ DON'T Commit When:
+
+1. **Code doesn't work yet**
+   - Syntax errors
+   - Runtime errors
+   - Tests failing
+   - Incomplete functionality
+
+2. **After each AI response**
+   - AI might need corrections
+   - Need to test integration
+   - May need adjustments
+
+3. **Uncertain about changes**
+   - Not tested properly
+   - Don't understand the code
+   - Temporary debugging code
+
+---
+
+## Pull Request Process
+
+### Before Creating PR
+
+```bash
+# 1. Ensure all tests pass
+php artisan test
+
+# 2. Run code quality checks
+composer check-style  # or your linter
+npm run lint
+
+# 3. Update from develop
+git checkout develop
+git pull origin develop
+git checkout feature/your-feature
+git merge develop
+
+# 4. Resolve any conflicts
+
+# 5. Test again after merge
+php artisan test
+
+# 6. Push and create PR
+git push origin feature/your-feature
+```
+
+### PR Description Template
+
+```markdown
+## Description
+Brief description of the feature/fix
+
+## Type of Change
+- [ ] New feature
+- [ ] Bug fix
+- [ ] Refactoring
+- [ ] Documentation
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing completed
+
+## Checklist
+- [ ] Code follows project standards
+- [ ] All tests pass
+- [ ] No console errors
+- [ ] Documentation updated
+- [ ] Reviewed own code
+
+## Screenshots (if applicable)
+[Add screenshots for UI changes]
+
+## Related Issues
+Closes #123
+```
+
+---
+
+## Emergency Hotfix Process
+
+```bash
+# 1. Branch from main (only for hotfixes!)
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-security-issue
+
+# 2. Fix the issue
+# 3. Test thoroughly
+# 4. Commit
+git commit -m "hotfix: fix critical security vulnerability"
+
+# 5. Merge to main AND develop
+git checkout main
+git merge hotfix/critical-security-issue
+git push origin main
+
+git checkout develop
+git merge hotfix/critical-security-issue
+git push origin develop
+
+# 6. Delete hotfix branch
+git branch -d hotfix/critical-security-issue
+```
+
+---
+
+## Git Commands Reference
+
+### Daily Workflow
+
+```bash
+# Start day - update develop
+git checkout develop
+git pull origin develop
+
+# Create feature branch
+git checkout -b feature/new-feature
+
+# Check current branch
+git branch
+
+# Check status
+git status
+
+# Stage changes
+git add .
+git add path/to/file.php
+
+# Commit (after testing!)
+git commit -m "feat: description"
+
+# Push to remote
+git push origin feature/new-feature
+
+# Update branch with develop changes
+git checkout develop
+git pull origin develop
+git checkout feature/new-feature
+git merge develop
+```
+
+### Branch Management
+
+```bash
+# List all branches
+git branch -a
+
+# Delete local branch
+git branch -d feature/old-feature
+
+# Delete remote branch
+git push origin --delete feature/old-feature
+
+# Rename current branch
+git branch -m new-name
+
+# Switch to existing branch
+git checkout branch-name
+
+# Create and switch to new branch
+git checkout -b feature/new-branch
+```
+
+### Undo Changes
+
+```bash
+# Undo uncommitted changes
+git checkout -- path/to/file.php
+git restore path/to/file.php
+
+# Undo last commit (keep changes)
+git reset --soft HEAD~1
+
+# Undo last commit (discard changes)
+git reset --hard HEAD~1
+
+# Undo staging
+git reset HEAD path/to/file.php
+```
+
+---
+
+## Common Scenarios
+
+### Scenario 1: AI Created Feature
+
+```bash
+# AI creates complete feature
+# Before committing:
+
+# 1. Run tests
+php artisan test --filter NewFeatureTest
+
+# 2. Manual testing
+# - Test in browser
+# - Check all functionality
+# - Verify edge cases
+
+# 3. Code review yourself
+# - Read the generated code
+# - Understand what was changed
+# - Check for security issues
+
+# 4. Only then commit
+git add .
+git commit -m "feat: implement new feature with tests"
+```
+
+### Scenario 2: Multiple AI Iterations
+
+```bash
+# AI Response 1: Creates controller (has bug)
+# → DON'T COMMIT
+
+# AI Response 2: Fixes bug
+# → DON'T COMMIT
+
+# AI Response 3: Adds validation
+# → DON'T COMMIT
+
+# AI Response 4: Adds tests
+# → TEST EVERYTHING
+
+# ✅ After testing all together:
+git add .
+git commit -m "feat: implement user controller with validation"
+```
+
+### Scenario 3: Work in Progress
+
+```bash
+# Need to switch tasks but feature incomplete
+git add .
+git commit -m "wip: user authentication (incomplete)"
+git push origin feature/user-auth
+
+# Later, continue work and amend
+git add .
+git commit --amend -m "feat: implement user authentication"
+git push origin feature/user-auth --force
+```
+
+---
+
+## Protected Branches Configuration
+
+### GitHub/GitLab Settings
+
+**For `main` branch:**
+- ✅ Require pull request reviews (1+ approvals)
+- ✅ Require status checks to pass
+- ✅ Require branches to be up to date
+- ✅ Include administrators
+- ❌ Allow force pushes
+- ❌ Allow deletions
+
+**For `develop` branch:**
+- ✅ Require pull request reviews
+- ✅ Require status checks to pass
+- ✅ Require branches to be up to date
+- ❌ Allow direct pushes (except emergencies)
+
+---
+
+## Commit Frequency Guidelines
+
+### ✅ Good Commit Frequency
+
+```bash
+# One feature = 1-3 commits
+feat: implement user permissions       # Main feature
+test: add comprehensive permission tests   # Additional tests
+docs: update permission documentation  # Documentation
+```
+
+### ❌ Bad Commit Frequency
+
+```bash
+# One feature = 15 commits (TOO MANY!)
+add controller
+fix typo
+fix bug
+add another fix
+try again
+fix again
+add validation
+fix validation
+update validation
+add test
+fix test
+update test
+final fix
+really final fix
+please work now
+```
+
+---
+
+## AI Collaboration Best Practices
+
+### When Working with AI
+
+1. **Request complete features**
+   ```
+   "Create a complete user authentication system with:
+   - Controllers
+   - Form Requests
+   - Tests
+   - Documentation"
+   ```
+
+2. **Test before committing**
+   ```
+   "I'll test this implementation first, then we can commit"
+   ```
+
+3. **Batch changes together**
+   ```
+   "Let's implement all validation logic, then test, then commit"
+   ```
+
+4. **Ask AI to wait**
+   ```
+   "Don't suggest commits yet, I want to test this first"
+   ```
+
+---
+
+## Quick Reference Card
+
+```bash
+# RULES TO REMEMBER:
+❌ Never commit to main
+❌ Never commit to develop (unless hotfix)
+✅ Always work on feature/* branches
+✅ Always test before commit
+✅ One feature = One clean commit
+
+# WORKFLOW:
+1. Create feature branch from develop
+2. Implement feature with AI
+3. Test thoroughly
+4. Commit with clear message
+5. Create Pull Request
+6. Merge to develop after review
+
+# COMMIT ONLY WHEN:
+✅ All tests pass
+✅ Feature works correctly
+✅ Code is reviewed
+✅ No obvious bugs
+```
+
+---
+
+## Critical Reminders
+
+**Before EVERY commit, ask yourself:**
+
+1. ✅ Did I test this code?
+2. ✅ Do all tests pass?
+3. ✅ Does the feature work correctly?
+4. ✅ Is the commit message clear?
+5. ✅ Am I on the correct branch?
+6. ✅ Is this a complete, logical change?
+
+**If any answer is NO → DON'T COMMIT YET!**
+
+---
+
+## Git Hooks (Optional)
+
+Create `.git/hooks/pre-commit`:
+
+```bash
+#!/bin/bash
+
+# Check if on protected branch
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch" = "main" ]; then
+  echo "❌ ERROR: Direct commits to main are not allowed!"
+  echo "Please create a feature branch instead."
+  exit 1
+fi
+
+if [ "$branch" = "develop" ]; then
+  echo "⚠️  WARNING: Committing directly to develop"
+  read -p "Are you sure? (y/n) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi
+
+# Run tests
+echo "Running tests..."
+php artisan test
+
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed! Commit aborted."
+  exit 1
+fi
+
+echo "✅ All checks passed!"
+```
+
+Make executable:
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+---
+
+## Summary
+
+**Key Principles:**
+1. 🔒 Protect main and develop branches
+2. 🌿 Work on feature branches
+3. ✅ Test before committing
+4. 📝 Write clear commit messages
+5. 🔄 Use Pull Requests
+6. 🎯 One feature = One clean commit
+
+**Remember:**
+> "Commit quality over quantity. One well-tested commit is better than ten 'fix' commits."
+
+---
+
+This workflow ensures:
+- ✅ Clean Git history
+- ✅ Stable develop branch
+- ✅ Production-ready main branch
+- ✅ Easy code review
+- ✅ Professional development process

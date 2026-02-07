@@ -1,0 +1,164 @@
+---
+description: "Database transaction rules for Laravel. Always use DB::transaction() when operations involve multiple tables or depend on each other to ensure data consistency."
+alwaysApply: false
+---
+
+# Database Transactions - Laravel Project
+
+## When to Use Transactions
+
+**ALWAYS use `DB::transaction()`** when:
+- Creating/updating records in multiple tables
+- Operations that depend on each other
+- Any operation that could partially fail
+- Syncing relationships (tags, categories, permissions)
+- File uploads combined with database saves
+- API calls combined with database operations
+
+## Rules
+
+1. **Never save data partially** - If one part fails, ALL changes must be rolled back
+2. **Use transactions for data consistency** - Prevent orphaned or inconsistent records
+3. **Re-throw exceptions** - Allow transactions to rollback automatically
+
+## Correct Pattern
+
+```php
+use Illuminate\Support\Facades\DB;
+
+// ✅ CORRECT - Transaction wraps all operations
+public function store(StorePostRequest $request)
+{
+    try {
+        DB::transaction(function () use ($request) {
+            // Create main record
+            $post = Post::create($request->validated());
+            
+            // Sync relationships
+            $post->tags()->sync($request->tags);
+            $post->categories()->attach($request->categories);
+            
+            // Create related records
+            AuditLog::create([
+                'action' => 'post_created',
+                'model_id' => $post->id,
+            ]);
+            
+            // Upload files
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('posts');
+                $post->update(['image_path' => $path]);
+            }
+        });
+        
+        return redirect()->route('posts.index')
+            ->with('success', 'Post created successfully');
+            
+    } catch (\Exception $e) {
+        \Log::error('Failed to create post', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        
+        return back()->withErrors(['error' => 'Failed to create post'])
+            ->withInput();
+    }
+}
+```
+
+## Wrong Pattern
+
+```php
+// ❌ WRONG - No transaction, partial saves possible
+public function store(StorePostRequest $request)
+{
+    $post = Post::create($request->validated());
+    // If this fails, post is already created (orphaned)
+    $post->tags()->sync($request->tags);
+    
+    // If this fails, post exists without audit log
+    AuditLog::create(['action' => 'post_created']);
+}
+```
+
+## Advanced: Manual Transaction Control
+
+When you need more control:
+
+```php
+DB::beginTransaction();
+
+try {
+    $user = User::create($data);
+    $user->profile()->create($profileData);
+    
+    DB::commit();
+} catch (\Exception $e) {
+    DB::rollBack();
+    throw $e;
+}
+```
+
+## Nested Transactions
+
+Laravel uses savepoints for nested transactions:
+
+```php
+DB::transaction(function () {
+    $post = Post::create($data);
+    
+    // Inner transaction (uses savepoint)
+    DB::transaction(function () use ($post) {
+        $post->tags()->sync($tags);
+    });
+});
+```
+
+## Common Scenarios
+
+### Creating with Many-to-Many
+
+```php
+DB::transaction(function () use ($request) {
+    $employee = Employee::create($request->validated());
+    $employee->projects()->attach($request->projects, [
+        'role' => 'developer',
+        'allocated_hours' => 40
+    ]);
+});
+```
+
+### Updating with File Upload
+
+```php
+DB::transaction(function () use ($request, $document) {
+    // Delete old file
+    if ($document->file_path) {
+        Storage::delete($document->file_path);
+    }
+    
+    // Upload new file
+    $path = $request->file('document')->store('documents');
+    
+    // Update database
+    $document->update([
+        'title' => $request->title,
+        'file_path' => $path,
+    ]);
+});
+```
+
+### Mass Operations
+
+```php
+DB::transaction(function () use ($userIds) {
+    // Multiple operations that must succeed together
+    User::whereIn('id', $userIds)->update(['status' => 'active']);
+    Notification::whereIn('user_id', $userIds)->delete();
+    AuditLog::create(['action' => 'bulk_activation']);
+});
+```
+
+## Performance Note
+
+Transactions add minimal overhead. **Always prioritize data consistency over micro-optimizations.**
