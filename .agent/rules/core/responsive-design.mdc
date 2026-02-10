@@ -1,0 +1,8 @@
+---
+description: "Responsive, mobile, tablet, desktop, breakpoints, layout, grid, flex, media query"
+alwaysApply: true
+---
+TODO frontend DEVE ser responsivo para desktop, tablet e mobile. Sem excecao.
+Abordagem mobile-first: estilizar para mobile primeiro, depois sm:, md:, lg:, xl:.
+Testar visualmente nos 3 breakpoints antes de considerar concluido.
+Usar Tailwind responsive utilities (sm, md, lg, xl, 2xl) em todo layout.

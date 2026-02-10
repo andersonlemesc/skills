@@ -1,0 +1,7 @@
+---
+description: "Idioma, lingua, language, portugues, pt_BR, comunicacao, respostas"
+alwaysApply: true
+---
+Responder SEMPRE em portugues brasileiro (pt_BR).
+Comentarios no codigo, variaveis e nomes de funcoes permanecem em ingles.
+Mensagens de usuario no sistema (flash, validacao, UI labels) em pt_BR.
